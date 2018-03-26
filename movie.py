@@ -23,24 +23,26 @@ if cap.isOpened():
                 start = time.time()
                 # FIXME this is for visual purpose only
                 frame = cv2.bitwise_not(frame)
-                # Apply the mask and display the result
+                # Apply the mask
                 maskedImg = cv2.bitwise_and(frame, mask)
+                # Resize image to half of it
                 maskedImg = cv2.resize(maskedImg, (0,0), fx=0.5, fy=0.5)
                 h, w = maskedImg.shape[:2]
 
+                # Change perspective
                 pts1 = np.float32([[0,0],[w,0],[0,h],[w,h]])
                 pts2 = np.float32([[0,0],[w,0],[0,int(w/4)],[w,int(w/4)]])
 
                 M = cv2.getPerspectiveTransform(pts1,pts2)
-
                 maskedImg = cv2.warpPerspective(maskedImg,M,(w,int(w/4)))
+
                 h, w = maskedImg.shape[:2]
                 
                 #create empty matrix
                 visTB = np.zeros((h*2 + int(w/2), h*2 + int(w/2), 3), np.uint8)
                 visLR = copy.copy(visTB)
 
-                #combine 2 images
+                #combine 4 images
                 # TOP
                 visTB[:h, h-int(w/4):h-int(w/4)+w, :3] = maskedImg
                 # BOTTOM
@@ -59,7 +61,10 @@ if cap.isOpened():
                 
                 cv2.imshow('frame', cv2.bitwise_or(visLR, visTB))
                 # print('END', time.time() - start)
-                time.sleep(0.04 - (time.time() - start)) # ~ 24 frames per second
+                
+                # ~ 24 frames per second
+                time.sleep(0.04 - (time.time() - start))
+                
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             else:
@@ -67,5 +72,4 @@ if cap.isOpened():
 
 # Release everything if job is finished
 cap.release()
-# out.release()
 cv2.destroyAllWindows()
