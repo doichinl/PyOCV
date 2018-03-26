@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import copy
-import datetime
+import time
 
 # cap = cv2.VideoCapture('http://api.new.livestream.com/accounts/7970204/events/2926299/live.m3u8')
 cap = cv2.VideoCapture('video.mp4')
@@ -20,6 +20,7 @@ if cap.isOpened():
         while(cap.isOpened()):
             ret, frame = cap.read()
             if ret==True:
+                start = time.time()
                 # FIXME this is for visual purpose only
                 frame = cv2.bitwise_not(frame)
                 # Apply the mask and display the result
@@ -57,7 +58,8 @@ if cap.isOpened():
                 visLR[h-int(w/4):w+h-int(w/4), h + int(w/2):h*2 + int(w/2), :3] = right
                 
                 cv2.imshow('frame', cv2.bitwise_or(visLR, visTB))
-                print(datetime.datetime.now())
+                # print('END', time.time() - start)
+                time.sleep(0.04 - (time.time() - start)) # ~ 24 frames per second
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             else:
