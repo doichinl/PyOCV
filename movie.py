@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import copy
 import time
+import threading
+import queue
 
 class Topview:
     width=640
@@ -17,6 +19,8 @@ class Topview:
         self.__init_capture()
         self.__make_mask()
 
+        # q = queue.Queue()
+
         while(True):
             start = time.time()
 
@@ -26,6 +30,25 @@ class Topview:
             back = self.__capture_back()
             left = self.__capture_left()
             right = self.__capture_right()
+
+            # t1 = threading.Thread(target=self.__capture_front, args=[q])
+            # t2 = threading.Thread(target=self.__capture_back, args=[q])
+            # t3 = threading.Thread(target=self.__capture_left, args=[q])
+            # t4 = threading.Thread(target=self.__capture_right, args=[q])
+
+            # t1.start()
+            # t2.start()
+            # t3.start()
+            # t4.start()
+
+            # t1.join()
+            # front = q.get()
+            # t2.join()
+            # back = q.get()
+            # t3.join()
+            # left = q.get()
+            # t4.join()
+            # right = q.get()
 
             if isinstance(front, np.ndarray):
                 res = cv2.bitwise_or(res, front)
@@ -51,6 +74,7 @@ class Topview:
                 break
 
             # ~ 24 frames per second
+            print("{:+.4f}".format(time.time() - start))
             if time.time() - start < 0.04:
                 time.sleep(0.04 - (time.time() - start))
         
@@ -111,7 +135,7 @@ class Topview:
         frame = cv2.warpPerspective(frame, M, (self.width, self.height))
         return frame
 
-    def __capture_front(self):
+    def __capture_front(self): #, queue):
         if not(self.frontCapture.isOpened):
             return None
 
@@ -129,15 +153,16 @@ class Topview:
                 self.height-int(self.width/4):self.height-int(self.width/4)+self.width,
                 :3
             ] = frame
+            # queue.put(vis)
             return vis
         
         return None
 
-    def __capture_back(self):
-        if not(self.frontCapture.isOpened):
+    def __capture_back(self): #, queue):
+        if not(self.backCapture.isOpened):
             return None
 
-        ret, frame = self.frontCapture.read()
+        ret, frame = self.backCapture.read()
         if ret == True:
             frame = self.__apply_mask(frame)
             frame = self.__change_perspective(frame)
@@ -151,15 +176,16 @@ class Topview:
                 self.height-int(self.width/4):self.height-int(self.width/4)+self.width,
                 :3
             ] = cv2.flip(frame, -1)
+            # queue.put(vis)
             return vis
         
         return None
 
-    def __capture_left(self):
-        if not(self.frontCapture.isOpened):
+    def __capture_left(self): #, queue):
+        if not(self.leftCapture.isOpened):
             return None
 
-        ret, frame = self.frontCapture.read()
+        ret, frame = self.leftCapture.read()
         if ret == True:
             frame = self.__apply_mask(frame)
             frame = self.__change_perspective(frame)
@@ -176,15 +202,16 @@ class Topview:
                 :self.height,
                 :3
             ] = frame
+            # queue.put(vis)
             return vis
         
         return None
 
-    def __capture_right(self):
-        if not(self.frontCapture.isOpened):
+    def __capture_right(self): #, queue):
+        if not(self.rightCapture.isOpened):
             return None
 
-        ret, frame = self.frontCapture.read()
+        ret, frame = self.rightCapture.read()
         if ret == True:
             frame = self.__apply_mask(frame)
             frame = self.__change_perspective(frame)
@@ -201,9 +228,15 @@ class Topview:
                 self.height + int(self.width/2):self.height*2 + int(self.width/2),
                 :3
             ] = frame
+            # queue.put(vis)
             return vis
         
         return None
 
-topview = Topview('video.mp4', 'video.mp4', 'video.mp4', 'video.mp4')
+topview = Topview(
+    'video.mp4',
+    'video.mp4',
+    'video.mp4',
+    'video.mp4'
+)
 topview.capture()
